@@ -1,0 +1,149 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Header Files\PDBLoading">
+      <UniqueIdentifier>{1fd73fdd-0097-4d7d-a6db-2e20c91810c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\PDBLoading">
+      <UniqueIdentifier>{c4b362f4-0fb1-4479-bfb6-87d4f4f31d6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ProteinRendering">
+      <UniqueIdentifier>{862d7f12-c8ef-43bd-b531-d42372e3ccfc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ProteinRendering">
+      <UniqueIdentifier>{134655a9-f004-44e4-a650-d567602692f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MathUtilities">
+      <UniqueIdentifier>{ab4f7d47-d223-4909-8cc1-2efb0eae907d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MathUtilities">
+      <UniqueIdentifier>{bff1e218-487a-4561-812d-51faf63531c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\GLSL">
+      <UniqueIdentifier>{1ae25672-da99-4189-a993-38a51b816bc8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GLSL">
+      <UniqueIdentifier>{fb9e0584-1b58-4558-a280-140cceae5653}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders">
+      <UniqueIdentifier>{76d7a261-c5ec-4a1e-8571-183dd531adfd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\CartoonModel">
+      <UniqueIdentifier>{fcfca7ed-dd3a-4b9a-b6e6-fc711f2ca7ce}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="BasicOpenGLTemplate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="console.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PDBloading\DataTable.cpp">
+      <Filter>Source Files\PDBLoading</Filter>
+    </ClCompile>
+    <ClCompile Include="ProteinRendering\Backbone.cpp">
+      <Filter>Source Files\ProteinRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="MathUtilities\Quaternion.cpp">
+      <Filter>Source Files\MathUtilities</Filter>
+    </ClCompile>
+    <ClCompile Include="MathUtilities\Vector3d.cpp">
+      <Filter>Source Files\MathUtilities</Filter>
+    </ClCompile>
+    <ClCompile Include="MathUtilities\matrix2d.cpp">
+      <Filter>Source Files\MathUtilities</Filter>
+    </ClCompile>
+    <ClCompile Include="PDBLoading\FileHandle.cpp">
+      <Filter>Source Files\PDBLoading</Filter>
+    </ClCompile>
+    <ClCompile Include="ProteinRendering\Atoms.cpp">
+      <Filter>Source Files\ProteinRendering</Filter>
+    </ClCompile>
+    <ClCompile Include="GLSL\Shader.cpp">
+      <Filter>Source Files\GLSL</Filter>
+    </ClCompile>
+    <ClCompile Include="CartoonModel.cpp">
+      <Filter>Source Files\CartoonModel</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="console.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PDBloading\DataTable.h">
+      <Filter>Header Files\PDBLoading</Filter>
+    </ClInclude>
+    <ClInclude Include="ProteinRendering\Backbone.h">
+      <Filter>Header Files\ProteinRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="MathUtilities\MatrixRoutines.h">
+      <Filter>Header Files\MathUtilities</Filter>
+    </ClInclude>
+    <ClInclude Include="MathUtilities\Quaternion.h">
+      <Filter>Header Files\MathUtilities</Filter>
+    </ClInclude>
+    <ClInclude Include="MathUtilities\Vector3d.h">
+      <Filter>Header Files\MathUtilities</Filter>
+    </ClInclude>
+    <ClInclude Include="MathUtilities\sphericalcoords.h">
+      <Filter>Header Files\MathUtilities</Filter>
+    </ClInclude>
+    <ClInclude Include="MathUtilities\matrix2d.h">
+      <Filter>Header Files\MathUtilities</Filter>
+    </ClInclude>
+    <ClInclude Include="PDBLoading\FileHandle.h">
+      <Filter>Header Files\PDBLoading</Filter>
+    </ClInclude>
+    <ClInclude Include="ProteinRendering\Atoms.h">
+      <Filter>Header Files\ProteinRendering</Filter>
+    </ClInclude>
+    <ClInclude Include="GLSL\Shader.h">
+      <Filter>Header Files\GLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="CartoonModel.h">
+      <Filter>Source Files\CartoonModel</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\basic.frag">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\basic.vert">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\basicSpecular.frag">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\basicSpecular.vert">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\basicTransformations.frag">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\basicTransformations.vert">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\cartoonModelShader.frag">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\cartoonModelShader.vert">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="calc_Cubic_Spline.cl">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
+</Project>
