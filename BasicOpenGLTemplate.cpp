@@ -235,6 +235,7 @@ void init() {
 	string dsspType = "DSSP";
 	
 	//Protein file loading (Both PDB and DSSP files are required for the cartoon model)
+	//Comment out line 92 to view large proteins at high frame rates (non-interactive)
 	file_handle.openFile("PDB Test Files\\1CRN(327).pdb", pdbType);
 	file_handle.openFile("PDB Test Files\\1CRN(327).dssp", dsspType);
 	
