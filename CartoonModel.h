@@ -1,3 +1,6 @@
+//OpenGL 3.0 - Calculates and renders the cartoon model
+//Author: Volodymyr Nazarenko (100174968)
+
 #pragma once
 
 using namespace std;
@@ -21,7 +24,7 @@ using namespace std;
 class CartoonModel {
 public:
 	void loadShader(const char* vertPath, const char* fragPath);
-	void initCartoonModel(AtomList theList);
+	void initCartoonModel(AtomList theList, int colourScheme);
 	void drawCartoonModel(glm::mat4 ProjectionMatrix, glm::vec2 xyMove, float ZOOM, float SPIN, bool isTransparent);
 
 private:
@@ -36,7 +39,7 @@ private:
 	bool isNextSecondaryStructureID(AtomList theList, string type, int iPos);
 	void applyCartoonShaderParams(glm::mat4 ProjectionMatrix, glm::vec2 xyMove, float ZOOM, float SPIN, bool isTransparent);
 
-	void ClearCartoonModelData();
+	void ClearCartoonModelBufferData();
 	void addCartoonParams(vector<glm::vec3>& newShapeVerts, vector<glm::vec3>& newNormals, vector<glm::vec3>& newColours);
 	void renderCartoonUsingVBO(int shader);
 	void renderCartoonVBO(int shader);
@@ -52,12 +55,13 @@ private:
 	unsigned int numColours = (LOD - 1) * 36;
 
 	vector<vector<glm::vec3>> rainbowColours{
-		{vector<glm::vec3>(numColours, glm::vec3(1.0f, 0.0f, 0.0f))},
-		{vector<glm::vec3>(numColours, glm::vec3(1.0f, 0.5f, 0.0f))},
-		{vector<glm::vec3>(numColours, glm::vec3(1.0f, 1.0f, 0.0f))},
-		{vector<glm::vec3>(numColours, glm::vec3(0.0f, 0.5f, 0.0f))},
-		{vector<glm::vec3>(numColours, glm::vec3(0.678f, 0.847f, 0.902f))},
-		{vector<glm::vec3>(numColours, glm::vec3(0.0f, 0.0f, 1.0f))}
+		{vector<glm::vec3>(numColours, glm::vec3(1.0f, 0.0f, 0.0f))},	//Red
+		{vector<glm::vec3>(numColours, glm::vec3(1.0f, 0.5f, 0.0f))},	//Orange
+		{vector<glm::vec3>(numColours, glm::vec3(1.0f, 1.0f, 0.0f))},	//Yellow
+		{vector<glm::vec3>(numColours, glm::vec3(0.0f, 1.0f, 0.0f))},	//Green
+		{vector<glm::vec3>(numColours, glm::vec3(0.0f, 0.0f, 1.0f))},	//Blue
+		{vector<glm::vec3>(numColours, glm::vec3(0.3f, 0.0f, 0.5f))},	//Purple
+		{vector<glm::vec3>(numColours, glm::vec3(0.54f, 0.0f, 0.83f))}	//Violet
 	};
 
 protected:

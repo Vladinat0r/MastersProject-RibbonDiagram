@@ -1,6 +1,6 @@
 //OpenGL 3.0 - Loads Proteins from Files on the Protein Data Bank
 
-//Author: Stephen Laycock and Volodymyr Nazarenko
+//Author: Stephen Laycock and Volodymyr Nazarenko (100174968)
 //Copyright (C) 2011 - Stephen Laycock, University of East Anglia
 //Source Code For Educational Purposes
 
@@ -36,9 +36,9 @@ Shader moleculeShader;  ///shader object
 
 float mTransparency = 0.2f;	//Molecule transparency
 float cTransparency = 1.0f;	//Cartoon model transparency
-bool isCartoon = true;
+bool isCartoonRender = true;
 bool isCartoonSpin = false;
-bool isMolecule = false;
+bool isMoleculeRender = false;
 bool isTransparent = false;
 
 //ConsoleWindow console;
@@ -75,6 +75,7 @@ glm::mat4 ModelViewMatrix;  // matrix for the modelling and viewing
 GLfloat position[] = {0.0f, 0.0f, 0.0f, 1.0f};
 
 CartoonModel CM;
+int cartoonColourScheme = 1;	//Defines which colour scheme to use
 
 /*************    START OF OPENGL FUNCTIONS   ****************/
 void display() {
@@ -84,18 +85,18 @@ void display() {
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (isCartoon) {
+	if (isCartoonRender) {
 		if (isCartoonSpin) {
 			updateCartoonSpin();
 		}
-		//CM.initCartoonModel(theList);
-		CM.drawCartoonModel(ProjectionMatrix, xyMove, ZOOM, SPIN, isTransparent);
+		CM.initCartoonModel(theList, cartoonColourScheme);	//Comment out this update to view large proteins at high frame rates (non-interactive)
+		CM.drawCartoonModel(ProjectionMatrix, xyMove, ZOOM, SPIN, isTransparent);	//Renders the cartoon model
 	}
-	if (isMolecule) {
+	if (isMoleculeRender) {
 		drawMolecule();
 	}
 
-
+	//Displays the frame rate in the console
 	QueryPerformanceCounter((LARGE_INTEGER*)&now);
 	if(((float(now - startTime) / float(ticksPerSecond))) > 1)
 	{
@@ -229,30 +230,34 @@ void init() {
 
 	cout << "Loading files..." << endl;
 	FileHandle file_handle;
+
+	string pdbType = "PDB";
+	string dsspType = "DSSP";
 	
-	//file_handle.openFile("PDB Test Files\\1CRN(327).pdb", false);
-	//file_handle.openFile("PDB Test Files\\1CRN(327).dssp", true);		//Loads DSSP file
+	//Protein file loading (Both PDB and DSSP files are required for the cartoon model)
+	file_handle.openFile("PDB Test Files\\1CRN(327).pdb", pdbType);
+	file_handle.openFile("PDB Test Files\\1CRN(327).dssp", dsspType);
+	
+	//file_handle.openFile("PDB Test Files\\5ADH(510).pdb", pdbType);
+	//file_handle.openFile("PDB Test Files\\5ADH(510).dssp", dsspType);
 
-	//file_handle.openFile("PDB Test Files\\5ADH(510).pdb", false);
-	//file_handle.openFile("PDB Test Files\\5ADH(510).dssp", true);		//Loads DSSP file
+	//file_handle.openFile("PDB Test Files\\1OGZ(1057).pdb", pdbType);
+	//file_handle.openFile("PDB Test Files\\1OGZ(1057).dssp", dsspType);
 
-	//file_handle.openFile("PDB Test Files\\1OGZ(1057).pdb", false);
-	//file_handle.openFile("PDB Test Files\\1OGZ(1057).dssp", true);	//Loads DSSP file
+	//file_handle.openFile("PDB Test Files\\1ANF(2860).pdb", pdbType);
+	//file_handle.openFile("PDB Test Files\\1ANF(2860).dssp", dsspType);
 
-	//file_handle.openFile("PDB Test Files\\1ANF(2860).pdb", false);
-	//file_handle.openFile("PDB Test Files\\1ANF(2860).dssp", true);		//Loads DSSP file
+	//file_handle.openFile("PDB Test Files\\5ADH(3127).pdb", pdbType);
+	//file_handle.openFile("PDB Test Files\\5ADH(3127).dssp", dsspType);
 
-	//file_handle.openFile("PDB Test Files\\5ADH(3127).pdb", false);
-	//file_handle.openFile("PDB Test Files\\5ADH(3127).dssp", true);	//Loads DSSP file
+	//file_handle.openFile("PDB Test Files\\1ADG(3601).pdb", pdbType);
+	//file_handle.openFile("PDB Test Files\\1ADG(3601).dssp", dsspType);
 
-	//file_handle.openFile("PDB Test Files\\1ADG(3601).pdb", false);
-	//file_handle.openFile("PDB Test Files\\1ADG(3601).dssp", true);	//Loads DSSP file
+	//file_handle.openFile("PDB Test Files\\7BJW(4820).pdb", pdbType);
+	//file_handle.openFile("PDB Test Files\\7BJW(4820).dssp", dsspType);
 
-	file_handle.openFile("PDB Test Files\\7BJW(4820).pdb", false);
-	file_handle.openFile("PDB Test Files\\7BJW(4820).dssp", true);		//Loads DSSP file
-
-	//file_handle.openFile("PDB Test Files\\1BKS(5231).pdb", false);
-	//file_handle.openFile("PDB Test Files\\1BKS(5231).dssp", true);	//Loads DSSP file
+	//file_handle.openFile("PDB Test Files\\1BKS(5231).pdb", pdbType);
+	//file_handle.openFile("PDB Test Files\\1BKS(5231).dssp", dsspType);
 	
 
 	//Obtain the list of atoms from the protein
@@ -289,7 +294,7 @@ void init() {
 	//glDepthFunc(GL_LEQUAL);
 
 
-	//Transparency
+	//OpenGL transparency settings
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -304,15 +309,17 @@ void init() {
 	SuperAtom::constructUnitSphere(16, moleculeShader.handle());
 
 
-	//Cartoon shader/model initialisation
+	//Cartoon shader and model initialisation
 	const char* vertPath = "shaders/cartoonModelShader.vert";
 	const char* fragPath = "shaders/cartoonModelShader.frag";
 	CM.loadShader(vertPath, fragPath);
-	CM.initCartoonModel(theList);
+
+	CM.initCartoonModel(theList, cartoonColourScheme);
 }
 
 
 void processKeys() {
+	//Camera controls
 	if (keys[VK_ADD]) {
 		ZOOM -= 5.0f;
 	}
@@ -341,18 +348,40 @@ void processKeys() {
 		SPIN += 1.5f;
 	}
 
+	//Visualisation settings
 	if (keys['C']) {
-		if (isCartoon) {
-			isCartoon = false;
+		if (isCartoonRender) {
+			isCartoonRender = false;
 			mTransparency = 1.0f;
 			glUniform1f(glGetUniformLocation(moleculeShader.handle(), "transparency"), mTransparency);
 		}
 		else {
-			isCartoon = true;
+			isCartoonRender = true;
 			mTransparency = 0.2f;
 			glUniform1f(glGetUniformLocation(moleculeShader.handle(), "transparency"), mTransparency);
 		}
 		keys['C'] = false;
+	}
+
+	if (keys['1']) {
+		if (cartoonColourScheme == 1) {
+
+		}
+		else {
+			cartoonColourScheme = 1;
+			CM.initCartoonModel(theList, cartoonColourScheme);
+			keys['1'] = false;
+		}
+	}
+	if (keys['2']) {
+		if (cartoonColourScheme == 2) {
+
+		}
+		else {
+			cartoonColourScheme = 2;
+			CM.initCartoonModel(theList, cartoonColourScheme);
+			keys['2'] = false;
+		}
 	}
 
 	if (keys['V']) {
@@ -376,11 +405,11 @@ void processKeys() {
 	}
 
 	if (keys['M']) {
-		if (isMolecule) {
-			isMolecule = false;
+		if (isMoleculeRender) {
+			isMoleculeRender = false;
 		}
 		else {
-			isMolecule = true;
+			isMoleculeRender = true;
 		}
 		keys['M'] = false;
 	}

@@ -1,3 +1,6 @@
+//OpenCL multi-threaded implementation of the Cubic B-Spline algorithm
+//Author: Volodymyr Nazarenko (100174968)
+
 __kernel void calc_Cubic_Spline(__global const float *points,	__global const float *normals,
 								__global float *splineSegCA,	__global float *splineSegO) {
 	int i = get_global_id(0);

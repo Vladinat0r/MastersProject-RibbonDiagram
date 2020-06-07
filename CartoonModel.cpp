@@ -1,5 +1,9 @@
+//OpenGL 3.0 - Calculates and renders the cartoon model
+//Author: Volodymyr Nazarenko (100174968)
+
 #include "CartoonModel.h"
 
+//OpenCL multi-threaded implementation of the Cubic B-Spline algorithm
 void CartoonModel::calcCubicSpline(vector<Vector3d> points, vector<glm::vec3> norms, vector<glm::vec3> &splineSeg, vector<glm::vec3> &splineSegCAO) {
 	// Load the kernel source code into the array source_str
 	FILE *fp;
@@ -83,12 +87,14 @@ void CartoonModel::calcCubicSpline(vector<Vector3d> points, vector<glm::vec3> no
 	ret = clReleaseContext(context);
 }
 
-void CartoonModel::initCartoonModel(AtomList theList) {
-	ClearCartoonModelData();
+void CartoonModel::initCartoonModel(AtomList theList, int colourScheme) {
+	ClearCartoonModelBufferData();	//Erases data to re-initialise the cartoon model
+	unsigned int chainColourCounter = 0;	//Tracks the colour to use for each chain.
+	bool isChangeRainbowColour = false;
 
 	vector<int> indexCA;
 
-	vector<glm::vec3> residueOCNormals;
+	vector<glm::vec3> residueOCANormals;
 
 	unsigned int theListSize = theList.size();
 	string lastResidue = theList[theListSize - 1]->getResidue();
@@ -115,7 +121,6 @@ void CartoonModel::initCartoonModel(AtomList theList) {
 	bool isNextElemTheSame = false;
 	bool isLastElem = false;
 
-	glm::mat4 rtMatrix, seg1Mat, seg2Mat;
 	glm::vec3 lastBL2, lastBR2, lastTL2, lastTR2;
 
 	glm::vec3 lastFrontNorm, lastBackNorm, lastLeftNorm, lastRightNorm, lastTopNorm, lastBottomNorm;
@@ -123,9 +128,6 @@ void CartoonModel::initCartoonModel(AtomList theList) {
 	vector<glm::vec3> alphaColours(numColours, glm::vec3(1.0f, 0.0f, 0.0f));
 	vector<glm::vec3> betaColours(numColours, glm::vec3(0.0f, 0.0f, 1.0f));
 	vector<glm::vec3> otherColours(numColours, glm::vec3(0.5f, 0.5f, 0.5f));
-
-	unsigned int rainbowCounter = 0;
-	bool isChangeRainbowColour = false;
 
 	//1st ([i]) - Nitrogen atom
 	//2nd ([i+1]) - Alpha Carbon atom
@@ -140,7 +142,7 @@ void CartoonModel::initCartoonModel(AtomList theList) {
 			isLastElem = false;
 			numOfPoints = 0;
 			indexCA.clear();
-			residueOCNormals.clear();
+			residueOCANormals.clear();
 			residueCounter--;
 			
 			//Locates the first residue number of the next chain
@@ -168,18 +170,18 @@ void CartoonModel::initCartoonModel(AtomList theList) {
 			glm::vec3 CAONormal = glm::normalize(glm::vec3(O.x, O.y, O.z) - glm::vec3(CA.x, CA.y, CA.z));
 
 			//Creates binormal O atom directions
-			if (residueCounter > startResidueCounter && glm::dot(CAONormal, residueOCNormals[numOfPoints-1]) < 0.0f) {
-				residueOCNormals.push_back(-CAONormal); //Flipped structure plane normal
+			if (numOfPoints > 0 && residueCounter > startResidueCounter && glm::dot(CAONormal, residueOCANormals[numOfPoints-1]) < 0.0f) {
+				residueOCANormals.push_back(-CAONormal); //Flipped structure plane normal
 			}
 			else {
-				residueOCNormals.push_back(CAONormal); //Structure plane normal
+				residueOCANormals.push_back(CAONormal); //Structure plane normal
 			}
 
 			residueCounter++;
 			numOfPoints++;
 		}
 
-
+		//If the list has four points, calculate the spline and geometry
 		if (numOfPoints >= 4) {
 			vector<glm::vec3> splineSegment(LOD);
 			vector<glm::vec3> splineSegmentCAO(LOD);
@@ -190,7 +192,7 @@ void CartoonModel::initCartoonModel(AtomList theList) {
 			point2 = theList[indexCA[2]]->getMyLocalPosition();
 			point3 = theList[indexCA[3]]->getMyLocalPosition();
 
-			//OpenCL - alternative parameter and B-Spline function call
+			//OpenCL multi-threading - alternative parameter and B-Spline function call
 			/*vector<Vector3d> points = { theList[IndexCA[0]]->getMyLocalPosition(),
 										theList[IndexCA[1]]->getMyLocalPosition(),
 										theList[IndexCA[2]]->getMyLocalPosition(),
@@ -230,20 +232,20 @@ void CartoonModel::initCartoonModel(AtomList theList) {
 							b3 * point3.z;
 
 
-				float xNorm =	b0 * (point0.x + residueOCNormals[0].x) +
-								b1 * (point1.x + residueOCNormals[1].x) +
-								b2 * (point2.x + residueOCNormals[2].x) +
-								b3 * (point3.x + residueOCNormals[3].x);
+				float xNorm =	b0 * (point0.x + residueOCANormals[0].x) +
+								b1 * (point1.x + residueOCANormals[1].x) +
+								b2 * (point2.x + residueOCANormals[2].x) +
+								b3 * (point3.x + residueOCANormals[3].x);
 
-				float yNorm =	b0 * (point0.y + residueOCNormals[0].y) +
-								b1 * (point1.y + residueOCNormals[1].y) +
-								b2 * (point2.y + residueOCNormals[2].y) +
-								b3 * (point3.y + residueOCNormals[3].y);
+				float yNorm =	b0 * (point0.y + residueOCANormals[0].y) +
+								b1 * (point1.y + residueOCANormals[1].y) +
+								b2 * (point2.y + residueOCANormals[2].y) +
+								b3 * (point3.y + residueOCANormals[3].y);
 
-				float zNorm =	b0 * (point0.z + residueOCNormals[0].z) +
-								b1 * (point1.z + residueOCNormals[1].z) +
-								b2 * (point2.z + residueOCNormals[2].z) +
-								b3 * (point3.z + residueOCNormals[3].z);
+				float zNorm =	b0 * (point0.z + residueOCANormals[0].z) +
+								b1 * (point1.z + residueOCANormals[1].z) +
+								b2 * (point2.z + residueOCANormals[2].z) +
+								b3 * (point3.z + residueOCANormals[3].z);
 
 				splineSegment[LODCount] = glm::vec3(x, y, z);
 				splineSegmentCAO[LODCount] = glm::vec3(xNorm, yNorm, zNorm);
@@ -312,7 +314,7 @@ void CartoonModel::initCartoonModel(AtomList theList) {
 				glm::vec3 seg2HalfWidth = glm::normalize(seg2O - seg2CA) * activeWidth2;
 				backTopLeft = seg2CA - seg2HalfWidth;
 				backTopRight = seg2O + seg2HalfWidth;
-				//Matrix rotation and translation
+
 				if (isArrowhead || //If this is an arrow head OR
 					(p == 0 && //If first sub-segment AND...
 					(lastElemID != "E" && currentElemID == "E") || //If last segment is not a beta-sheet and current segment is a beta-sheet, OR
@@ -362,7 +364,7 @@ void CartoonModel::initCartoonModel(AtomList theList) {
 					//Flip Front face
 					frontNorm = glm::normalize(glm::cross((frontTopRight - frontBottomRight), (frontBottomLeft - frontBottomRight)));
 					if ((p == 0 && currentElemID != lastElemID) || isArrowhead) {
-						shapeVerts[vertIndex] =		frontTopRight;		//2
+						shapeVerts[vertIndex] =		frontTopRight;		//2	- Alternative indexing of points
 						shapeVerts[vertIndex + 1] = frontBottomRight;	//1
 						shapeVerts[vertIndex + 2] = frontBottomLeft;	//0
 
@@ -532,22 +534,22 @@ void CartoonModel::initCartoonModel(AtomList theList) {
 				if (isFrontFace) {
 					if (isFrontAndBackFlipped) {
 						//Flip Front Normals
-						shapeNormals[normIndex] = frontNorm;			//2
+						shapeNormals[normIndex] = frontNorm;		//2
 						shapeNormals[normIndex + 1] = frontNorm;	//1
 						shapeNormals[normIndex + 2] = frontNorm;	//0
 
 						shapeNormals[normIndex + 3] = frontNorm;	//0
-						shapeNormals[normIndex + 4] = frontNorm;		//3
-						shapeNormals[normIndex + 5] = frontNorm;		//2
+						shapeNormals[normIndex + 4] = frontNorm;	//3
+						shapeNormals[normIndex + 5] = frontNorm;	//2
 					}
 					else {
 						//Keep Front Normals
 						shapeNormals[normIndex] = frontNorm;		//0
 						shapeNormals[normIndex + 1] = frontNorm;	//1
-						shapeNormals[normIndex + 2] = frontNorm;		//2
+						shapeNormals[normIndex + 2] = frontNorm;	//2
 
-						shapeNormals[normIndex + 3] = frontNorm;		//2
-						shapeNormals[normIndex + 4] = frontNorm;		//3
+						shapeNormals[normIndex + 3] = frontNorm;	//2
+						shapeNormals[normIndex + 4] = frontNorm;	//3
 						shapeNormals[normIndex + 5] = frontNorm;	//0
 					}
 				}
@@ -559,21 +561,21 @@ void CartoonModel::initCartoonModel(AtomList theList) {
 					if (isFrontAndBackFlipped) {
 						//Flip Back Normals
 						shapeNormals[normIndex + 6] = backNorm;		//6
-						shapeNormals[normIndex + 7] = backNorm;	//5
-						shapeNormals[normIndex + 8] = backNorm;	//4
+						shapeNormals[normIndex + 7] = backNorm;		//5
+						shapeNormals[normIndex + 8] = backNorm;		//4
 
-						shapeNormals[normIndex + 9] = backNorm;	//4
-						shapeNormals[normIndex + 10] = backNorm;		//7
-						shapeNormals[normIndex + 11] = backNorm;		//6
+						shapeNormals[normIndex + 9] = backNorm;		//4
+						shapeNormals[normIndex + 10] = backNorm;	//7
+						shapeNormals[normIndex + 11] = backNorm;	//6
 					}
 					else {
 						//Keep Back Normals
-						shapeNormals[normIndex + 6] = backNorm;	//4
-						shapeNormals[normIndex + 7] = backNorm;	//5
+						shapeNormals[normIndex + 6] = backNorm;		//4
+						shapeNormals[normIndex + 7] = backNorm;		//5
 						shapeNormals[normIndex + 8] = backNorm;		//6
 
 						shapeNormals[normIndex + 9] = backNorm;		//6
-						shapeNormals[normIndex + 10] = backNorm;		//7
+						shapeNormals[normIndex + 10] = backNorm;	//7
 						shapeNormals[normIndex + 11] = backNorm;	//4
 					}
 				}
@@ -583,17 +585,17 @@ void CartoonModel::initCartoonModel(AtomList theList) {
 
 				if (isLeftAndRightFlipped) {
 					//Flip Left Normals
-					shapeNormals[normIndex + 12] = lastLeftNorm;		//3
-					shapeNormals[normIndex + 13] = leftNorm;	//0
-					shapeNormals[normIndex + 14] = leftNorm;	//5
+					shapeNormals[normIndex + 12] = lastLeftNorm;	//3
+					shapeNormals[normIndex + 13] = leftNorm;		//0
+					shapeNormals[normIndex + 14] = leftNorm;		//5
 
-					shapeNormals[normIndex + 15] = leftNorm;	//5
+					shapeNormals[normIndex + 15] = leftNorm;		//5
 					shapeNormals[normIndex + 16] = leftNorm;		//6
-					shapeNormals[normIndex + 17] = lastLeftNorm;		//3
+					shapeNormals[normIndex + 17] = lastLeftNorm;	//3
 
 					//Flip Right Normals
 					shapeNormals[normIndex + 18] = rightNorm;		//7
-					shapeNormals[normIndex + 19] = rightNorm;	//4
+					shapeNormals[normIndex + 19] = rightNorm;		//4
 					shapeNormals[normIndex + 20] = lastRightNorm;	//1
 
 					shapeNormals[normIndex + 21] = lastRightNorm;	//1
@@ -602,17 +604,17 @@ void CartoonModel::initCartoonModel(AtomList theList) {
 				}
 				else {
 					//Keep Left Normals
-					shapeNormals[normIndex + 12] = leftNorm;	//5
+					shapeNormals[normIndex + 12] = leftNorm;		//5
 					shapeNormals[normIndex + 13] = lastLeftNorm;	//0
-					shapeNormals[normIndex + 14] = lastLeftNorm;		//3
+					shapeNormals[normIndex + 14] = lastLeftNorm;	//3
 
-					shapeNormals[normIndex + 15] = lastLeftNorm;		//3
+					shapeNormals[normIndex + 15] = lastLeftNorm;	//3
 					shapeNormals[normIndex + 16] = leftNorm;		//6
-					shapeNormals[normIndex + 17] = leftNorm;	//5
+					shapeNormals[normIndex + 17] = leftNorm;		//5
 
 					//Keep Right Normals
 					shapeNormals[normIndex + 18] = lastRightNorm;	//1
-					shapeNormals[normIndex + 19] = rightNorm;	//4
+					shapeNormals[normIndex + 19] = rightNorm;		//4
 					shapeNormals[normIndex + 20] = rightNorm;		//7
 
 					shapeNormals[normIndex + 21] = rightNorm;		//7
@@ -622,41 +624,41 @@ void CartoonModel::initCartoonModel(AtomList theList) {
 
 				if (isTopAndBottomFlipped) {
 					//Flip Top Normals
-					shapeNormals[normIndex + 24] = topNorm;		//7
-					shapeNormals[normIndex + 25] = lastTopNorm;	//2 
+					shapeNormals[normIndex + 24] = topNorm;			//7
+					shapeNormals[normIndex + 25] = lastTopNorm;		//2 
 					shapeNormals[normIndex + 26] = lastTopNorm;		//3
 
 					shapeNormals[normIndex + 27] = lastTopNorm;		//3
-					shapeNormals[normIndex + 28] = topNorm;		//6
-					shapeNormals[normIndex + 29] = topNorm;		//7
+					shapeNormals[normIndex + 28] = topNorm;			//6
+					shapeNormals[normIndex + 29] = topNorm;			//7
 
 					//Flip Bottom Normals
 					shapeNormals[normIndex + 30] = lastBottomNorm;	//1
-					shapeNormals[normIndex + 31] = bottomNorm;	//4
-					shapeNormals[normIndex + 32] = bottomNorm;	//5
+					shapeNormals[normIndex + 31] = bottomNorm;		//4
+					shapeNormals[normIndex + 32] = bottomNorm;		//5
 
-					shapeNormals[normIndex + 33] = bottomNorm;	//5
+					shapeNormals[normIndex + 33] = bottomNorm;		//5
 					shapeNormals[normIndex + 34] = lastBottomNorm;	//0
 					shapeNormals[normIndex + 35] = lastBottomNorm;	//1
 				}
 				else {
 					//Keep Top Normals
 					shapeNormals[normIndex + 24] = lastTopNorm;		//3
-					shapeNormals[normIndex + 25] = lastTopNorm;	//2 
-					shapeNormals[normIndex + 26] = topNorm;		//7
+					shapeNormals[normIndex + 25] = lastTopNorm;		//2 
+					shapeNormals[normIndex + 26] = topNorm;			//7
 
-					shapeNormals[normIndex + 27] = topNorm;		//7
-					shapeNormals[normIndex + 28] = topNorm;		//6
+					shapeNormals[normIndex + 27] = topNorm;			//7
+					shapeNormals[normIndex + 28] = topNorm;			//6
 					shapeNormals[normIndex + 29] = lastTopNorm;		//3
 
 					//Keep Bottom Normals
-					shapeNormals[normIndex + 30] = bottomNorm;	//5
-					shapeNormals[normIndex + 31] = bottomNorm;	//4
+					shapeNormals[normIndex + 30] = bottomNorm;		//5
+					shapeNormals[normIndex + 31] = bottomNorm;		//4
 					shapeNormals[normIndex + 32] = lastBottomNorm;	//1
 
 					shapeNormals[normIndex + 33] = lastBottomNorm;	//1
 					shapeNormals[normIndex + 34] = lastBottomNorm;	//0
-					shapeNormals[normIndex + 35] = bottomNorm;	//5
+					shapeNormals[normIndex + 35] = bottomNorm;		//5
 				}
 
 				lastFrontNorm = frontNorm;
@@ -666,7 +668,7 @@ void CartoonModel::initCartoonModel(AtomList theList) {
 				lastTopNorm = topNorm;
 				lastBottomNorm = bottomNorm;
 
-				normIndex += 36;
+				normIndex += 36;	//Increment for next cube
 				vertIndex += 36;	//Increment for next cube
 
 				isArrowhead = false;
@@ -674,35 +676,39 @@ void CartoonModel::initCartoonModel(AtomList theList) {
 			}
 
 
-			////If alpha helix
-			//if (currentElemID._Equal("H")) {
-			//	addCartoonParams(shapeVerts, shapeNormals, alphaColours);
-			//}
-			////Else if beta sheet
-			//else if (currentElemID._Equal("E")) {
-			//	addCartoonParams(shapeVerts, shapeNormals, betaColours);
-			//}
-			////Else other unclassified structures
-			//else {
-			//	addCartoonParams(shapeVerts, shapeNormals, otherColours);
-			//}
+			
 
-
-			if (isChangeRainbowColour) {
-				if (rainbowCounter == 5) {
-					rainbowCounter = 0;
+			if (colourScheme == 1) {
+				//If alpha helix
+				if (currentElemID._Equal("H")) {
+					addCartoonParams(shapeVerts, shapeNormals, alphaColours);
 				}
+				//Else if beta sheet
+				else if (currentElemID._Equal("E")) {
+					addCartoonParams(shapeVerts, shapeNormals, betaColours);
+				}
+				//Else other unclassified structures
 				else {
-					rainbowCounter++;
+					addCartoonParams(shapeVerts, shapeNormals, otherColours);
 				}
-				isChangeRainbowColour = false;
 			}
-			addCartoonParams(shapeVerts, shapeNormals, rainbowColours[rainbowCounter]);
+			else if (colourScheme == 2) {
+				if (isChangeRainbowColour) {
+					if (chainColourCounter == 6) {
+						chainColourCounter = 0;
+					}
+					else {
+						chainColourCounter++;
+					}
+					isChangeRainbowColour = false;
+				}
+				addCartoonParams(shapeVerts, shapeNormals, rainbowColours[chainColourCounter]);
+			}
 
 
 			numOfPoints--;
 			indexCA.erase(indexCA.begin());
-			residueOCNormals.erase(residueOCNormals.begin());
+			residueOCANormals.erase(residueOCANormals.begin());
 
 			splineSegment.clear();
 			splineSegmentCAO.clear();
@@ -788,7 +794,7 @@ void CartoonModel::loadShader(const char* vertPath, const char* fragPath) {
 	glUseProgram(cartoonShader.handle());
 }
 
-void CartoonModel::ClearCartoonModelData() {
+void CartoonModel::ClearCartoonModelBufferData() {
 	cartoonVertices.clear();
 	cartoonNormals.clear();
 	cartoonColours.clear();
@@ -813,10 +819,8 @@ void CartoonModel::renderCartoonVBO(int shader) {
 
 void CartoonModel::constructCartoonBuffers(int shader) {
 	if (!isCartoonVBOBuilt) {
-		// VAO allocation
 		glGenVertexArrays(1, &cartoonVAOID);
 
-		// First VAO setup
 		glBindVertexArray(cartoonVAOID);
 
 		glGenBuffers(3, cartoonVBOID);
