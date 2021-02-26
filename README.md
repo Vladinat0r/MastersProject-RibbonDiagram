@@ -1,7 +1,7 @@
 # Ribbon-Diagram-Visualisation
 A Ribbon Diagram Visualisation for Interactive Molecular Docking. ("boost" library is required to run: https://www.boost.org/)
 
-This software creates Ribbon Diagram visualisations of protein structures at runtime based on the PDB and DSSP files from the RCSB PDB Protein Data Bank at https://www.rcsb.org/
+This software is written in C++ with OpenGL API and creates Ribbon Diagram visualisations of protein structures at runtime based on the PDB and DSSP files from the RCSB PDB Protein Data Bank at https://www.rcsb.org/
 The files to be loaded can be changed by altering directory paths in the "BasicOpenGLTemplate.cpp" file in the "void init()" function.
 
 Controls: -Use arrowkeys to move the camera
