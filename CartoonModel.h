@@ -17,7 +17,7 @@ using namespace std;
 #include "glm\gtc\type_ptr.hpp"
 #include "glm\gtc\matrix_inverse.hpp"
 
-#include <CL/cl.h>
+//#include <CL/cl.h>
 #define MAX_SOURCE_SIZE (0x100000)
 
 
